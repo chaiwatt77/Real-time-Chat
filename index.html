@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.io chat</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      #username-container {
+        padding: 10px;
+      }
+
+      #username {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-right: 5px;
+      }
+
+      #setUsername {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      #messages {
+        list-style-type: none;
+        padding: 10px;
+        margin: 0;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      #form {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+      }
+
+      #input {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-right: 5px;
+      }
+
+      #sendButton {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      #sendButton:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      /* Style for other messages */
+      .other-message {
+        background-color: #f2f2f2;
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+      }
+
+      /* Style for own messages */
+      .own-message {
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Username input -->
+    <div id="username-container">
+      <input
+        id="username"
+        placeholder="Enter your username"
+        autocomplete="off"
+      />
+      <button id="setUsername">Set Username</button>
+    </div>
+
+    <!-- Chat messages -->
+    <ul id="messages"></ul>
+
+    <!-- Message input form -->
+    <form id="form" action="">
+      <input id="input" autocomplete="off" disabled /><button
+        id="sendButton"
+        disabled
+      >
+        Send
+      </button>
+    </form>
+
+    <!-- External script sources -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      const socket = io();
+      let username = null; // Variable to store the username
+
+      // Function to set the username
+      const setUsername = () => {
+        const input = document.getElementById("username");
+        const setUsernameButton = document.getElementById("setUsername");
+
+        // Get the username from the input field
+        username = input.value.trim();
+
+        // Enable message input and send button
+        document.getElementById("input").removeAttribute("disabled");
+        document.getElementById("sendButton").removeAttribute("disabled");
+
+        // Remove username input elements
+        input.parentNode.removeChild(input);
+        setUsernameButton.parentNode.removeChild(setUsernameButton);
+      };
+
+      // Event listener for setting username
+      document
+        .getElementById("setUsername")
+        .addEventListener("click", setUsername);
+
+      // Event listener for sending messages
+      document.getElementById("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("input");
+        const message = input.value.trim();
+        if (message && username) {
+          socket.emit("chat message", { username, message }); // Send both username and message
+          input.value = "";
+        }
+      });
+
+      // Event listener for receiving messages
+      socket.on("chat message", (data) => {
+        const { username: msgUsername, message } = data;
+        const item = document.createElement("li");
+        if (msgUsername === username) {
+          // Check if it's your own message
+          item.textContent = `${username}: ${message}`;
+          item.classList.add("own-message"); // Add class for styling
+        } else {
+          // Other user's message
+          item.textContent = `${msgUsername}: ${message}`;
+          item.classList.add("other-message"); // Add class for styling
+        }
+        document.getElementById("messages").appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+    </script>
+  </body>
+</html>
